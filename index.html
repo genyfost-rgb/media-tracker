@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Медиатрекер</title>
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 0;
+  background: url('https://api.deepai.org/job-view-file/d77855c4-f02c-4971-8762-d5d502ec9e5f/outputs/output.jpg') no-repeat center center fixed;
+  background-size: cover;
+  color: #333;
+}
+body::before {
+  content: "";
+  position: fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(255,255,255,0.5);
+  z-index: -1;
+}
+.container {
+  max-width: 700px;
+  margin: 40px auto;
+  padding: 20px;
+  background: rgba(255,255,255,0.95);
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.2);
+  position: relative;
+}
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #a67087;
+}
+form, .filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+input, select, button, textarea {
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+  color: #333;
+}
+input[type="text"], input[type="number"], select {
+  flex: 1 1 45%;
+}
+button {
+  flex: 1 1 100%;
+  background: #b7ccd7;
+  color: #fff;
+  cursor: pointer;
+  border: none;
+  transition: 0.3s;
+}
+button:hover {
+  background: #cee4ef;
+}
+ul {
+  list-style: none;
+  padding: 0;
+}
+li {
+  display: flex;
+  gap: 10px;
+  background: #fff;
+  margin-bottom: 15px;
+  padding: 15px;
+  border-radius: 8px;
+  position: relative;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  align-items: flex-start;
+}
+li.completed {
+  opacity: 0.7;
+  border-left: 5px solid #a1c0c0;
+}
+.media-image {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 5px;
+  background: #f0f0f0;
+  flex-shrink: 0;
+  transition: 0.3s;
+}
+.media-image.empty {
+  display: none;
+}
+.media-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.progress-container {
+  background: #ddd;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 5px 0;
+  position: relative;
+  height: 20px;
+}
+.progress-bar {
+  height: 100%;
+  background: #a1c0c0;
+  width: 0%;
+  transition: width 0.2s;
+}
+.progress-text {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  top: 0;
+  left: 0;
+  font-size: 0.8em;
+  line-height: 20px;
+  pointer-events: none;
+  color: #fff;
+}
+.status {
+  font-size: 0.9em;
+  margin-bottom: 5px;
+}
+.remove-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #82859f;
+  border: none;
+  color: #fff;
+  padding: 2px 5px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8em;
+}
+.remove-btn:hover {
+  background: #9b9eb9;
+}
+.image-edit button,
+#selectNewImageBtn {
+  display: inline-block;
+  background: #a1c0c0;
+  border: none;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.3s;
+  font-size: 0.9em;
+  margin-top: 5px;
+}
+.image-edit button:hover,
+#selectNewImageBtn:hover {
+  background: #8aa5a5;
+}
+.progress-input, .total-input {
+  width: 60px;
+  margin: 0 5px;
+  padding: 2px 5px;
+}
+.progress-edit {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+}
+textarea {
+  font-family: inherit; /* наследуем шрифт от body/контейнера */
+  font-size: inherit;   /* наследуем размер шрифта */
+  line-height: inherit; /* наследуем межстрочный интервал */
+  resize: vertical;
+  width: 100%;
+  margin-top: 5px;
+}
+input, select, textarea, button {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+.background-controls {
+  max-width: 700px;
+  margin: 20px auto;
+  display: flex;
+  justify-content: center;
+}
+.bg-selector {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.bg-container,
+#bgUrl {
+  flex: 1 1 200px;
+  padding: 10px;
+  text-align: center;
+  border-radius: 8px;
+  border: 2px dashed #ccc;
+  background: #f9f9f9;
+  cursor: pointer;
+  transition: 0.3s;
+  color: #666;
+}
+.bg-container:hover,
+#bgUrl:hover {
+  border-color: #a1c0c0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: #f0f8ff;
+}
+.bg-container input[type="file"] {
+  display: none;
+}
+.bg-container span {
+  display: block;
+  font-size: 0.9em;
+  color: #666;
+}
+#setBg {
+  flex: 1 1 200px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 2px dashed #ccc;
+  background: #f9f9f9;
+  cursor: pointer;
+  transition: 0.3s;
+  color: #666;
+}
+#setBg:hover {
+  border-color: #a1c0c0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: #f0f8ff;
+}
+#previewContainer {
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#previewContainer img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 5px;
+  background: #f0f0f0;
+}
+#previewContainer button {
+  padding: 4px 8px;
+  background: #82859f;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 5px;
+}
+#previewContainer button:hover {
+  background: #9b9eb9;
+}
+</style>
+</head>
+<body>
+
+<div class="background-controls">
+  <div class="bg-selector">
+    <label class="bg-container">
+      <span>выберите изображение для фона</span>
+      <input type="file" id="bgFile" accept="image/*">
+    </label>
+    <input type="text" id="bgUrl" placeholder="или вставьте URL фона">
+    <button id="setBg">применить фон</button>
+  </div>
+</div>
+
+<div class="container">
+<h1>медиатрекер ʕ ᵔᴥᵔ ʔ</h1>
+
+<form id="mediaForm">
+  <input type="text" id="title" placeholder="название" required>
+  <select id="type">
+    <option value="аниме">аниме</option>
+    <option value="манга">манга</option>
+    <option value="фильм">фильм</option>
+    <option value="сериал">сериал</option>
+    <option value="книга">книга</option>
+  </select>
+  <input type="text" id="progress" placeholder="текущий прогресс">
+  <input type="text" id="total" placeholder="всего">
+
+  <input type="file" id="newImageFile" accept="image/*" style="display:none;">
+  <button type="button" id="selectNewImageBtn">выбрать изображение</button>
+
+  <div id="previewContainer" style="display:none;">
+    <img id="previewImage" src="" alt="">
+    <button type="button" id="removePreviewBtn">удалить</button>
+  </div>
+
+  <textarea id="comment" placeholder="комментарий (опционально)"></textarea>
+  <button type="submit">добавить</button>
+</form>
+
+<div class="filters">
+  <select id="filterType">
+    <option value="все">все типы</option>
+    <option value="аниме">аниме</option>
+    <option value="манга">манга</option>
+    <option value="фильм">фильм</option>
+    <option value="сериал">сериал</option>
+    <option value="книга">книга</option>
+  </select>
+
+  <select id="filterStatus">
+    <option value="все">все статусы</option>
+    <option value="в процессе">в процессе</option>
+    <option value="завершено">завершено</option>
+  </select>
+
+  <select id="sortOrder">
+    <option value="none">сортировка</option>
+    <option value="asc">по возрастанию прогресса</option>
+    <option value="desc">по убыванию прогресса</option>
+  </select>
+</div>
+
+<ul id="mediaList"></ul>
+</div>
+
+<script>
+// ========== Инициализация ==========
+const form = document.getElementById('mediaForm');
+const list = document.getElementById('mediaList');
+const filterType = document.getElementById('filterType');
+const filterStatus = document.getElementById('filterStatus');
+const sortOrder = document.getElementById('sortOrder');
+
+const bgUrlInput = document.getElementById('bgUrl');
+const bgFileInput = document.getElementById('bgFile');
+const setBgBtn = document.getElementById('setBg');
+
+const newImageFileInput = document.getElementById('newImageFile');
+const selectNewImageBtn = document.getElementById('selectNewImageBtn');
+const previewContainer = document.getElementById('previewContainer');
+const previewImage = document.getElementById('previewImage');
+const removePreviewBtn = document.getElementById('removePreviewBtn');
+
+const typeSelect = document.getElementById('type');
+const progressInput = document.getElementById('progress');
+const totalInput = document.getElementById('total');
+
+let media = JSON.parse(localStorage.getItem('media')) || [];
+let uploadedImage = '';
+let bgImage = localStorage.getItem('bgImage') || '';
+
+if(bgImage) document.body.style.backgroundImage = `url('${bgImage}')`;
+
+// ========== Функции ==========
+function save(){ localStorage.setItem('media', JSON.stringify(media)); }
+function formatTime(val){
+  if(typeof val==='number'){
+    let h=Math.floor(val/3600);
+    let m=Math.floor((val%3600)/60);
+    let s=val%60;
+    return `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+  }
+  return val;
+}
+function parseTime(str){
+  const parts = str.split(':').map(Number);
+  if(parts.length===3) return parts[0]*3600+parts[1]*60+parts[2];
+  return Number(str)||0;
+}
+function getStatus(item){ return (item.total!=='?' && item.progress>=item.total)? "завершено":"в процессе"; }
+
+// ========= Предпросмотр изображения при добавлении =========
+selectNewImageBtn.addEventListener('click', ()=> newImageFileInput.click());
+newImageFileInput.addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(file){
+    const reader = new FileReader();
+    reader.onload = ev=>{
+      uploadedImage = ev.target.result;
+      previewImage.src = uploadedImage;
+      previewContainer.style.display = 'flex';
+    }
+    reader.readAsDataURL(file);
+  }
+});
+removePreviewBtn.addEventListener('click', ()=>{
+  uploadedImage='';
+  previewImage.src='';
+  previewContainer.style.display='none';
+  newImageFileInput.value='';
+});
+
+// ========= Обработка типа фильма =========
+typeSelect.addEventListener('change', ()=>{
+  if(typeSelect.value==='фильм'){
+    if(progressInput.value) progressInput.value = formatTime(parseTime(progressInput.value));
+    if(totalInput.value) totalInput.value = formatTime(parseTime(totalInput.value));
+    progressInput.placeholder='чч:мм:сс';
+    totalInput.placeholder='чч:мм:сс';
+  } else {
+    if(progressInput.value) progressInput.value = parseTime(progressInput.value);
+    if(totalInput.value && totalInput.value!=='?') totalInput.value = parseTime(totalInput.value);
+    progressInput.placeholder='текущий прогресс';
+    totalInput.placeholder='всего';
+  }
+});
+
+// ========= Render =========
+function render(){
+  let displayMedia = [...media];
+  displayMedia = displayMedia.filter(item=>{
+    const status = getStatus(item);
+    if(filterType.value!=="все" && item.type!==filterType.value) return false;
+    if(filterStatus.value!=="все" && status!==filterStatus.value) return false;
+    return true;
+  });
+  if(sortOrder.value==='asc') displayMedia.sort((a,b)=> (a.progress/(a.total==='?'?1:a.total))-(b.progress/(b.total==='?'?1:b.total)));
+  else if(sortOrder.value==='desc') displayMedia.sort((a,b)=> (b.progress/(b.total==='?'?1:b.total))-(a.progress/(a.total==='?'?1:a.total)));
+  
+  list.innerHTML='';
+  displayMedia.forEach((item,index)=>{
+    const status = getStatus(item);
+    const li=document.createElement('li');
+    if(status==='завершено') li.classList.add('completed');
+    
+    let progressPercent=0;
+    if(item.total!=='?' && item.total>0) progressPercent=Math.min(100,(item.progress/item.total)*100);
+    const displayProgress = (item.type==='фильм')? formatTime(item.progress)+'/'+formatTime(item.total): item.progress+'/'+item.total;
+
+    li.innerHTML=`
+      <img class="media-image ${item.image?'':'empty'}" src="${item.image||''}" alt="">
+      <div class="media-content">
+        <strong>${item.title}</strong> (${item.type})
+        <div class="status">${status}</div>
+        <div class="progress-container">
+          <div class="progress-bar" style="width:${progressPercent}%"></div>
+          <div class="progress-text">${displayProgress}</div>
+        </div>
+        <div class="progress-edit">
+          <label>текущий: <input type="text" class="progress-input" value="${(item.type==='фильм')?formatTime(item.progress):item.progress}"></label>
+          <label>Всего: <input type="text" class="total-input" value="${(item.type==='фильм')?formatTime(item.total):item.total}"></label>
+        </div>
+        <textarea placeholder="Комментарий">${item.comment||''}</textarea>
+        <div class="image-edit">
+          <input type="file" class="image-file" accept="image/*" style="display:none;">
+          <button type="button" class="image-select-btn">выбрать изображение</button>
+          ${item.image?'<button class="remove-img-btn">удалить изображение</button>':''}
+        </div>
+      </div>
+      <button class="remove-btn">✖</button>
+    `;
+    list.appendChild(li);
+
+    // ====== События для редактирования ======
+    const progressEl = li.querySelector('.progress-input');
+    const totalEl = li.querySelector('.total-input');
+    const textarea = li.querySelector('textarea');
+    const imageFile = li.querySelector('.image-file');
+    const selectImgBtn = li.querySelector('.image-select-btn');
+    const removeImgBtn = li.querySelector('.remove-img-btn');
+    const mediaImg = li.querySelector('.media-image');
+
+    // Изменение комментария
+    textarea.addEventListener('input', e => {
+      item.comment = e.target.value;
+      save();
+    });
+
+    // Изменение прогресса
+    progressEl.addEventListener('input', e => {
+      let val = e.target.value;
+      if(item.type==='фильм') val = parseTime(val);
+      else val = Number(val)||0;
+      if(item.total!=='?' && val>item.total) val=item.total;
+      if(val<0) val=0;
+      item.progress=val;
+      save(); render();
+    });
+
+    // Изменение total
+    totalEl.addEventListener('input', e => {
+      let val = e.target.value;
+      if(item.type==='фильм') val=parseTime(val);
+      else val = Number(val)||'?';
+      if(val<0) val=0;
+      item.total = val||'?';
+      if(item.total!=='?' && item.progress>item.total) item.progress=item.total;
+      save(); render();
+    });
+
+    // Выбор изображения
+    selectImgBtn.addEventListener('click', ()=> imageFile.click());
+    imageFile.addEventListener('change', e=>{
+      const file = e.target.files[0];
+      if(file){
+        const reader = new FileReader();
+        reader.onload = ev => {
+          item.image = ev.target.result;
+          save(); render();
+        }
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Удаление изображения
+    if(removeImgBtn){
+  removeImgBtn.addEventListener('click', e=>{
+    e.preventDefault();
+    item.image='';
+    mediaImg.src='';
+    mediaImg.classList.add('empty'); // скрываем изображение
+    save(); 
+    render();
+  });
+}
+
+    // Удаление тайтла
+    li.querySelector('.remove-btn').addEventListener('click', ()=>{
+      media.splice(media.indexOf(item),1);
+      save(); render();
+    });
+
+  });
+}
+
+// ========= Добавление нового тайтла =========
+form.addEventListener('submit', e=>{
+  e.preventDefault();
+  let type = typeSelect.value;
+  let progress = progressInput.value ? (type==='фильм'? parseTime(progressInput.value): Number(progressInput.value)) : 0;
+  let total = totalInput.value ? (type==='фильм'? parseTime(totalInput.value): Number(totalInput.value)) : '?';
+
+  media.push({
+    title: document.getElementById('title').value,
+    type: type,
+    progress: progress,
+    total: total,
+    image: uploadedImage,
+    comment: document.getElementById('comment').value||''
+  });
+
+  // Очистка формы и предпросмотра
+  uploadedImage='';
+  previewImage.src='';
+  previewContainer.style.display='none';
+  newImageFileInput.value='';
+  form.reset();
+  save(); render();
+});
+
+// ========= Фильтры и сортировка =========
+filterType.addEventListener('change', render);
+filterStatus.addEventListener('change', render);
+sortOrder.addEventListener('change', render);
+
+// ========= Смена фона =========
+function setBackground(url){
+  document.body.style.backgroundImage = `url('${url}')`;
+  localStorage.setItem('bgImage', url);
+}
+setBgBtn.addEventListener('click', ()=>{
+  const url = bgUrlInput.value;
+  if(url) setBackground(url);
+});
+bgFileInput.addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(file){
+    const reader = new FileReader();
+    reader.onload = ev=>{ setBackground(ev.target.result); }
+    reader.readAsDataURL(file);
+  }
+});
+
+// ========= Инициализация =========
+render();
+</script>
+</body>
+</html>
